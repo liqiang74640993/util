@@ -1,14 +1,17 @@
 TEMPLATE = app
-CONFIG += console c++17
-CONFIG -= app_bundle
-CONFIG -= qt
 
-INCLUDEPATH += ../../gtest/include
+include(../qt-common-config.pri)
+
+INCLUDEPATH += ../../gtest/include \
+            +=  ../thread   \
 
 LIBS += -lgtest \
-        -lgmock
+        -lgmock  \
+        -lthread
 
-LIBS += -L../../gtest/lib
+LIBS += -L../../gtest/lib \
+        -L../../bin
 
 SOURCES += \
+        ThreadTest.cpp \
         main.cpp

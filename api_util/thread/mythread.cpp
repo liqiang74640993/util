@@ -1,5 +1,4 @@
 #include "mythread.h"
-#include "htime.h"
 
 MyThread::MyThread():
     m_status(STATUS_STOP),m_statusChange(false),

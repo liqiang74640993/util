@@ -7,12 +7,8 @@
 
 using namespace std;
 
-
 class MyThread : public thread
 {
-
-
-
 public:
      enum Status{
          STATUS_STOP,
@@ -59,7 +55,6 @@ private:
     int run();
     void sleep();
     void changeStatus(Status status);
-
 public:
     MyThread();
 };
