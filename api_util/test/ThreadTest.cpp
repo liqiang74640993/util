@@ -9,7 +9,7 @@ class MyTask :public MyThread{
     virtual void doFinish(){std::cout <<  "doFinish" << std::endl; }
 };
 
-TEST(test, MyThreadTest) {
+TEST(ThreadTest, MyThread) {
     MyTask task;
     task.setSleepPolicy(MyThread::SLEEP_POLICY_SLEEP_FOR,1000);
     task.start();
@@ -33,7 +33,7 @@ static void printMsg(const std::string &msg)
 }
 
 
-TEST(test,MyThreadPoolTest)
+TEST(ThreadTest, ThreadPool)
 {
     // 创建线程池，包含 4 个线程
     ThreadPool pool(4);
@@ -74,7 +74,7 @@ void exampleTask(void* arg) {
     sleep(1); // 模拟任务耗时
 }
 
-TEST(test,PosixThreadPoolTest)
+TEST(ThreadTest,PosixThreadPool)
 {
     //创建线程池
    PosixThreadPool* pool = threadPoolCreate(4, 10);
@@ -96,6 +96,71 @@ TEST(test,PosixThreadPoolTest)
    sleep(5);
    // 销毁线程池
    threadPoolDestroy(pool);
+}
+
+#include "ProducerConsumerPosix.h"
+
+sem_buf *g_buf = NULL;
+int g_sum = 0;
+
+void *produceTask(void *arg)
+{
+    for(int i = 0; i < 100; i++){
+        sembuf_insert(g_buf,(const ItemData *)&i);
+    }
+    return (void *)0;
+}
+
+void *consumerTask(void *arg)
+{
+    for(int i = 0; i < 100; i++){
+        int k;
+        sembuf_remove(g_buf,(ItemData *)&k);
+        g_sum += k;
+        std::cout << "task k: " << g_sum << std::endl;
+    }
+    return (void *)0;
+}
+
+TEST(ThreadTest,PosixProducerConsumer)
+{
+    g_buf = sembuf_init(10,sizeof(int));
+    if(g_buf == NULL) return;
+    pthread_t th1, th2;
+    pthread_create(&th1,NULL,produceTask,NULL);
+    pthread_create(&th2,NULL,consumerTask,NULL);
+    pthread_join(th1,NULL);
+    pthread_join(th2,NULL);
+    sembuf_destory(&g_buf);
+    std::cout << "g_sum:" << g_sum << std::endl;
+}
+
+int g_int = 0;
+pthread_mutex_t mtx;
+
+void *incr(void *arg){
+    for(int i = 0; i < 10000; ++i){
+        pthread_mutex_lock(&mtx);
+        ++g_int;
+        pthread_mutex_unlock(&mtx);
+    }
+    return (void *)0;
+}
+
+
+TEST(ThreadTest,PosixAPI)
+{
+    pthread_mutex_init(&mtx,NULL);
+
+    pthread_t th1,th2;
+
+    pthread_create(&th1,NULL,incr,NULL);//create thread
+    pthread_create(&th2,NULL,incr,NULL);//create thread
+
+    pthread_join(th1,NULL); //wait thread finish
+    pthread_join(th2,NULL);
+
+    std::cout << "g_int:" <<  g_int << std::endl;
 
 }
 

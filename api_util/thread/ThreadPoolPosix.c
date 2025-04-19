@@ -1,5 +1,8 @@
 #include "ThreadPoolPosix.h"
 
+
+#ifdef __linux__
+
 // 线程运行函数
 void* threadWorker(void* arg) {
     PosixThreadPool* pool = (PosixThreadPool*)arg;
@@ -115,3 +118,5 @@ void threadPoolDestroy(PosixThreadPool* pool) {
     pthread_cond_destroy(&pool->notify);
     free(pool);
 }
+
+#endif
