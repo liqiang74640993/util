@@ -41,6 +41,19 @@ bool sembuf_insert(IN sem_buf *sembuf, IN const ItemData data);
 void sembuf_destory(IN sem_buf **sembuf);
 
 
+/**
+ * @brief condition_buf 使用互斥和条件变量实现消费者和生产者
+ */
+
+typedef struct condition_buf condition_buf;
+
+condition_buf *condbuf_init(int maxsize, size_t itemlen);
+
+bool condbuf_insert(condition_buf *condbuf,const ItemData data);
+
+bool condbuf_remove(condition_buf *condbuf, ItemData  data);
+
+void condbuf_destory(condition_buf **condbuf);
 
 #endif
 

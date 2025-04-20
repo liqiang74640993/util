@@ -76,11 +76,11 @@ void sembuf_destory(sem_buf **sembuf)
     *sembuf = NULL;
 }
 
-
 typedef struct condition_buf
 {
     ItemData buf;//data buf
     ring_buffer rb_buf; //ring buffer
+    size_t itemlen;// 每个item length
     pthread_mutex_t buf_mutex;
     pthread_mutex_t full_mutex;
     pthread_mutex_t empty_mutex;
@@ -88,42 +88,71 @@ typedef struct condition_buf
     pthread_cond_t empty_cv;
 }condition_buf;
 
-
-condition_buf *condbuf_init(int n, size_t datalen)
+condition_buf *condbuf_init(int maxsize, size_t itemlen)
 {
-    condition_buf *cbuf = (condition_buf*)calloc(1, sizeof(condition_buf));
+    condition_buf *cbuf = (condition_buf *)calloc(1, sizeof(condition_buf));
     if(cbuf == NULL) return NULL;
+    cbuf->buf = (ItemData)calloc(maxsize,itemlen);
+    if(cbuf->buf == NULL){
+        goto Err;
+    }
+    int ret = RING_BUFFER_SUCCESS;
+    ret = rb_init(&cbuf->rb_buf,(uint8_t*)cbuf->buf,maxsize * itemlen);
+    if(ret != RING_BUFFER_SUCCESS) goto Err;
+    cbuf->itemlen = itemlen;
     pthread_mutex_init(&cbuf->buf_mutex,NULL);
     pthread_mutex_init(&cbuf->full_mutex,NULL);
     pthread_mutex_init(&cbuf->empty_mutex,NULL);
     pthread_cond_init(&cbuf->full_cv,NULL);
     pthread_cond_init(&cbuf->empty_cv,NULL);
-    cbuf->buf = (ItemData *)calloc(n,datalen);
-    if(cbuf->buf == NULL){
-        goto Err;
-    }
-    int ret = RING_BUFFER_SUCCESS;
-    ret = rb_init(&cbuf->rb_buf,(uint8_t*)cbuf->buf,n * datalen);
     return cbuf;
  Err:
-
+    if(cbuf->buf != NULL)
+        free(cbuf->buf);
     free(cbuf);
     return NULL;
 }
 
-void condbuf_insert(condition_buf *condbuf,const ItemData data)
+bool condbuf_insert(condition_buf *condbuf,const ItemData data)
 {
-
+    pthread_mutex_lock(&condbuf->full_mutex);
+    while(rb_get_freeSize(&condbuf->rb_buf) == 0){
+        pthread_cond_wait(&condbuf->full_cv,&condbuf->full_mutex);
+    }
+    pthread_mutex_lock(&condbuf->buf_mutex);
+    int ret = rb_write_string(&condbuf->rb_buf,(uint8_t *)data, condbuf->itemlen);
+    pthread_mutex_unlock(&condbuf->buf_mutex);
+    pthread_cond_signal(&condbuf->empty_cv);
+    pthread_mutex_unlock(&condbuf->full_mutex);
+    return ret == RING_BUFFER_SUCCESS ? true : false;
 }
 
-void condbuf_remove(condition_buf *condbuf, ItemData  data)
+bool condbuf_remove(condition_buf *condbuf, ItemData  data)
 {
-
+    pthread_mutex_lock(&condbuf->empty_mutex);
+    while(rb_get_length(&condbuf->rb_buf) == 0){
+        pthread_cond_wait(&condbuf->empty_cv,&condbuf->empty_mutex);
+    }
+    pthread_mutex_lock(&condbuf->buf_mutex);
+    int ret = rb_read_string(&condbuf->rb_buf,(uint8_t*)data,condbuf->itemlen);
+    pthread_mutex_unlock(&condbuf->buf_mutex);
+    pthread_cond_signal(&condbuf->full_cv);
+    pthread_mutex_unlock(&condbuf->empty_mutex);
+    return ret == RING_BUFFER_SUCCESS ? true : false;
 }
 
 void condbuf_destory(condition_buf **condbuf)
 {
-
+    if(condbuf == NULL || *condbuf == NULL) return;
+    condition_buf *temp = *condbuf;
+    pthread_mutex_destroy(&temp->buf_mutex);
+    pthread_mutex_destroy(&temp->full_mutex);
+    pthread_mutex_destroy(&temp->empty_mutex);
+    pthread_cond_destroy(&temp->full_cv);
+    pthread_cond_destroy(&temp->empty_cv);
+    if(temp->buf) free(temp->buf);
+    free(temp);
+    *condbuf = NULL;
 }
 
 #endif

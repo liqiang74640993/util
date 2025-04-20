@@ -100,7 +100,16 @@ TEST(ThreadTest,PosixThreadPool)
 
 #include "ProducerConsumerPosix.h"
 
+#ifdef SEM_BUF
+
 sem_buf *g_buf = NULL;
+
+#else
+
+condition_buf *g_buf = NULL;
+
+#endif
+
 struct object{
     int a;
     char str[100];
@@ -115,7 +124,11 @@ void *produceTask(void *arg)
         struct object o;
         o.a = (i+1);
         memcpy(o.str,temp,len);
+#ifdef SEM_BUF
         sembuf_insert(g_buf,(ItemData)&o);
+#else
+        condbuf_insert(g_buf,(ItemData)&o);
+#endif
     }
     return (void *)0;
 }
@@ -125,22 +138,35 @@ void *consumerTask(void *arg)
     (void )arg;
     struct object o;
     for(size_t j = 0; j < 100; j++){
-        sembuf_remove(g_buf,(ItemData)&o);
-        std::cout << "o.a:" << o.a << ", o.str:" << o.str << std::endl;
+#ifdef SEM_BUF
+     sembuf_remove(g_buf,(ItemData)&o);
+#else
+     condbuf_remove(g_buf,(ItemData)&o);
+#endif
+        std::cout << "o.a(int):" << o.a << ", o.str(string):" << o.str << std::endl;
     }
     return (void *)0;
 }
 
 TEST(ThreadTest,PosixProducerConsumer)
 {
+#ifdef SEM_BUF
     g_buf = sembuf_init(10,sizeof(struct object));
+#else
+    g_buf = condbuf_init(10,sizeof(struct object));
+#endif
     if(g_buf == NULL) return;
     pthread_t th1, th2;
     pthread_create(&th1,NULL,produceTask,NULL);
     pthread_create(&th2,NULL,consumerTask,NULL);
     pthread_join(th1,NULL);
     pthread_join(th2,NULL);
+#ifdef SEM_BUF
     sembuf_destory(&g_buf);
+#else
+    condbuf_destory(&g_buf);
+#endif
+
 }
 
 int g_int = 0;
