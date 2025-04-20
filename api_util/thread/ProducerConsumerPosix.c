@@ -1,15 +1,17 @@
 #include <stdlib.h>
 #include <pthread.h>
+#include <string.h>
 #include "ProducerConsumerPosix.h"
 
 typedef struct sem_buf{
     ItemData *buf; //存放数据的缓冲区
+    size_t itemlen;// item length
     int n;  //缓冲区的大小
     int front; // buf[(front+1)%n] is the first item
     int rear; //buf[rear % n] is the rear item
-    sem_t bufSem; //用于控制读写buf的信号量
-    sem_t slot; //counts available slots
-    sem_t item;//counts available items
+    sem_t mutex; //用于控制读写buf的信号量
+    sem_t slots; //counts available slots
+    sem_t items;//counts available items
 }sem_buf;
 
 sem_buf *sembuf_init(IN int n, IN size_t datalen)
@@ -21,12 +23,13 @@ sem_buf *sembuf_init(IN int n, IN size_t datalen)
     sembuf->buf = (ItemData *)calloc(n,datalen);
     sembuf->rear = 0;
     sembuf->front = 0;
+    sembuf->itemlen = datalen;
     int ret = 0;
-    ret = sem_init(&sembuf->bufSem,0,1);
+    ret = sem_init(&sembuf->mutex,0,1);
     if(ret != 0) goto Err;
-    ret = sem_init(&sembuf->slot,0,n);
+    ret = sem_init(&sembuf->slots,0,n);
     if(ret != 0) goto Err;
-    ret =  sem_init(&sembuf->item,0,0);//
+    ret =  sem_init(&sembuf->items,0,0);//
     if(ret != 0) goto Err;
     return sembuf;
 Err:
@@ -34,28 +37,28 @@ Err:
     return NULL;
 }
 
-#include <stdio.h>
-void sembuf_remove(sem_buf *sembuf, ItemData *data)
+
+void sembuf_remove(sem_buf *sembuf, ItemData data)
 {
     //移除时要判断是否有数据
-    sem_wait(&sembuf->item);//
-    sem_wait(&sembuf->bufSem);
-    *data = sembuf->buf[(++sembuf->front)% sembuf->n];
-    printf("sembuf_remove:%d\n",*data);
-    sem_post(&sembuf->bufSem);
-    sem_post(&sembuf->slot);
+    sem_wait(&sembuf->items);//
+    sem_wait(&sembuf->mutex);
+    memcpy(data,&sembuf->buf[(++sembuf->front)% (sembuf->n)],sembuf->itemlen);
+    //(ItemData*)data = sembuf->buf[(++sembuf->front)% (sembuf->n)];// 赋值
+    sem_post(&sembuf->mutex);
+    sem_post(&sembuf->slots);
 }
 
 
-void sembuf_insert(sem_buf *sembuf, const ItemData *data)
+void sembuf_insert(sem_buf *sembuf, const ItemData data)
 {
     //插入时要判断是否有空闲的位置
-    sem_wait(&sembuf->slot);
-    sem_wait(&sembuf->bufSem);
-    sembuf->buf[(++sembuf->rear) % sembuf->n] = *data;
-    printf("sembuf_insert:%d\n",(int *)sembuf->buf[(sembuf->rear) % sembuf->n]);
-    sem_post(&sembuf->bufSem);
-    sem_post(&sembuf->item);
+    sem_wait(&sembuf->slots);
+    sem_wait(&sembuf->mutex);
+    memcpy(&sembuf->buf[(++sembuf->rear) % sembuf->n],data,sembuf->itemlen);
+    //sembuf->buf[(++sembuf->rear) % sembuf->n] = (ItemData*) data;
+    sem_post(&sembuf->mutex);
+    sem_post(&sembuf->items);
 }
 
 void sembuf_destory(sem_buf **sembuf)
@@ -63,9 +66,9 @@ void sembuf_destory(sem_buf **sembuf)
 
     if(sembuf == NULL || *sembuf == NULL) return;
     sem_buf *temp = *sembuf;
-    sem_destroy(&temp->bufSem);
-    sem_destroy(&temp->item);
-    sem_destroy(&temp->slot);
+    sem_destroy(&temp->mutex);
+    sem_destroy(&temp->items);
+    sem_destroy(&temp->slots);
     free(temp->buf);
     free(temp);
     *sembuf = NULL;

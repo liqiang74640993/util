@@ -105,19 +105,20 @@ int g_sum = 0;
 
 void *produceTask(void *arg)
 {
+    (void )arg;
     for(int i = 0; i < 100; i++){
-        sembuf_insert(g_buf,(const ItemData *)&i);
+        sembuf_insert(g_buf,(const ItemData)&i);
     }
     return (void *)0;
 }
 
 void *consumerTask(void *arg)
 {
-    for(int i = 0; i < 100; i++){
-        int k;
-        sembuf_remove(g_buf,(ItemData *)&k);
+    (void )arg;
+    int k = 0;
+    for(size_t j = 0; j < 100; j++){
+        sembuf_remove(g_buf,(ItemData)&k);
         g_sum += k;
-        std::cout << "task k: " << g_sum << std::endl;
     }
     return (void *)0;
 }
@@ -131,8 +132,8 @@ TEST(ThreadTest,PosixProducerConsumer)
     pthread_create(&th2,NULL,consumerTask,NULL);
     pthread_join(th1,NULL);
     pthread_join(th2,NULL);
+    std::cout << "g_sum: " << g_sum << std::endl;
     sembuf_destory(&g_buf);
-    std::cout << "g_sum:" << g_sum << std::endl;
 }
 
 int g_int = 0;

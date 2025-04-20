@@ -24,9 +24,9 @@ typedef struct sem_buf sem_buf;
  */
 sem_buf *sembuf_init(IN int n, IN size_t datalen);
 
-void sembuf_remove(IN sem_buf *sembuf, OUT ItemData *data);
+void sembuf_remove(IN sem_buf *sembuf, OUT ItemData data);
 
-void sembuf_insert(IN sem_buf *sembuf, IN const ItemData *data);
+void sembuf_insert(IN sem_buf *sembuf, IN const ItemData data);
 
 /**
  * @brief sembuf_destory 释放sembuf,如果不调用，会存在内存泄漏
