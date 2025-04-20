@@ -7,7 +7,8 @@ INCLUDEPATH += ../../gtest/include \
 
 LIBS += -lgtest \
         -lgmock  \
-        -lthread
+        -lthread \
+        -lcommon
 
 LIBS += -L../../gtest/lib \
         -L../../bin

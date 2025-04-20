@@ -2,4 +2,5 @@ TEMPLATE = subdirs
 
 SUBDIRS += \
     test \
-    thread
+    thread \
+    common \

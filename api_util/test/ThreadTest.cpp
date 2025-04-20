@@ -101,13 +101,21 @@ TEST(ThreadTest,PosixThreadPool)
 #include "ProducerConsumerPosix.h"
 
 sem_buf *g_buf = NULL;
-int g_sum = 0;
+struct object{
+    int a;
+    char str[100];
+};
 
 void *produceTask(void *arg)
 {
     (void )arg;
+    const char *temp = "hello";
+    size_t len = strlen(temp);
     for(int i = 0; i < 100; i++){
-        sembuf_insert(g_buf,(const ItemData)&i);
+        struct object o;
+        o.a = (i+1);
+        memcpy(o.str,temp,len);
+        sembuf_insert(g_buf,(ItemData)&o);
     }
     return (void *)0;
 }
@@ -115,24 +123,23 @@ void *produceTask(void *arg)
 void *consumerTask(void *arg)
 {
     (void )arg;
-    int k = 0;
+    struct object o;
     for(size_t j = 0; j < 100; j++){
-        sembuf_remove(g_buf,(ItemData)&k);
-        g_sum += k;
+        sembuf_remove(g_buf,(ItemData)&o);
+        std::cout << "o.a:" << o.a << ", o.str:" << o.str << std::endl;
     }
     return (void *)0;
 }
 
 TEST(ThreadTest,PosixProducerConsumer)
 {
-    g_buf = sembuf_init(10,sizeof(int));
+    g_buf = sembuf_init(10,sizeof(struct object));
     if(g_buf == NULL) return;
     pthread_t th1, th2;
     pthread_create(&th1,NULL,produceTask,NULL);
     pthread_create(&th2,NULL,consumerTask,NULL);
     pthread_join(th1,NULL);
     pthread_join(th2,NULL);
-    std::cout << "g_sum: " << g_sum << std::endl;
     sembuf_destory(&g_buf);
 }
 
