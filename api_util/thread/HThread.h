@@ -7,7 +7,7 @@
 
 using namespace std;
 
-class MyThread : public thread
+class HThread
 {
 public:
      enum Status{
@@ -35,6 +35,8 @@ public:
         m_millseconds = millseconds;
     }
 
+    thread::id getId();//thread id
+
     virtual int start();
     virtual int resume();
     virtual int stop();
@@ -56,7 +58,16 @@ private:
     void sleep();
     void changeStatus(Status status);
 public:
-    MyThread();
+    HThread();
+    HThread(std::thread&& t);
+    //not copy and move
+
+    HThread(const HThread&) = delete;
+    HThread& operator=(const HThread& othre) = delete;
+    HThread(const HThread&&) = delete;
+    HThread& operator=(const HThread&& othre) = delete;
+
+    virtual ~HThread(){ stop(); } //
 };
 
 #endif // MYTHREAD_H

@@ -3,6 +3,6 @@
 
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
-    ::testing::GTEST_FLAG(filter) = "ThreadTest.PosixProducerConsumer";
+    ::testing::GTEST_FLAG(filter) = "DesignPatternTest.TemplateMethod";
     return RUN_ALL_TESTS();
 }

@@ -41,7 +41,6 @@ PosixThreadPool* threadPoolCreate(int threadCount, int queueSize) {
         perror("Failed to allocate thread pool");
         return NULL;
     }
-
     // 初始化线程池结构
     pool->threadCount = threadCount;
     pool->queueSize = queueSize;

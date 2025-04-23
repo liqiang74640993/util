@@ -11,9 +11,19 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
+
 //返回值定义
 #define RING_BUFFER_SUCCESS     0x01
 #define RING_BUFFER_ERROR       0x00
+
+/**
+   C语言实现的环形缓冲区
+*/
 
 //环形缓冲区结构体
 //如果所有数组都用于存放元素，那么当缓冲区的长度为0或者缓冲区满的时候，
@@ -38,5 +48,9 @@ uint8_t rb_read_byte(ring_buffer *rb_handle, uint8_t *output_addr);             
 uint8_t rb_read_string(ring_buffer *rb_handle, uint8_t *output_addr, size_t read_Length);        //从缓冲区头指针读指定长度数据
 size_t rb_get_length(ring_buffer *rb_handle);                                                    //获取缓冲区里已储存的数据长度
 size_t rb_get_freeSize(ring_buffer *rb_handle);                                                  //获取缓冲区可用储存空间
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif//#ifndef _RING_BUFFER_H_

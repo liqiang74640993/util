@@ -6,8 +6,10 @@
  * \version v0.4.0
 */
 
+//在QT中，如果一个项目中，没有cpp文件，qt会当作c项目，导致在编译 cplus_ring_buffer无法通过，因此这里使用.cpp结尾
+
 #include <string.h>
-#include "ring_buffer.h"
+#include "c_ring_buffer.h"
 
 /**
  * \brief 初始化新缓冲区

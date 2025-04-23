@@ -2,7 +2,7 @@
 #include <pthread.h>
 #include <string.h>
 #include <semaphore.h>
-#include "ring_buffer.h"
+#include "c_ring_buffer.h"
 #include "ProducerConsumerPosix.h"
 
 #ifdef __linux__

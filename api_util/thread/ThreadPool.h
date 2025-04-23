@@ -46,7 +46,7 @@ ThreadPool::ThreadPool(int threadSize):m_stop(false)
                         if(this->m_stop && this->m_tasks.empty()){//pool exit and no task
                             return;
                         }
-                        task = std::move(this->m_tasks.front());
+                        task = std::move(this->m_tasks.front());//m_tasks 的每一个对象都是std::packaged_task
                         this->m_tasks.pop();   
                     }   
                     task();//execute task;

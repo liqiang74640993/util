@@ -4,10 +4,11 @@ CONFIG -= app_bundle
 CONFIG -= qt
 
 HEADERS += \
-     define.h \
-     ring_buffer.h
+     c_ring_buffer.h \
+     cplus_ring_buffer.h \
+     define.h
 
 SOURCES += \
-    ring_buffer.c
+    c_ring_buffer.cpp
 
 DESTDIR = ../../bin #generate

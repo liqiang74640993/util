@@ -1,13 +1,25 @@
-#include "mythread.h"
+#include "HThread.h"
 
-MyThread::MyThread():
+HThread::HThread():
     m_status(STATUS_STOP),m_statusChange(false),
     m_policy(SLEEP_POLICY_NO_SLEEP),m_millseconds(0)
 {
 
 }
 
-int MyThread::start()
+HThread::HThread(thread &&t):
+    m_status(STATUS_STOP),m_statusChange(false),
+    m_policy(SLEEP_POLICY_NO_SLEEP),m_millseconds(0),m_thread(std::move(t))
+{
+
+}
+
+thread::id HThread::getId()
+{
+    return m_thread.get_id();
+}
+
+int HThread::start()
 {
     if(m_status != STATUS_STOP)//already start
         return 0;
@@ -23,7 +35,7 @@ int MyThread::start()
     return 0;
 }
 
-int MyThread::resume()
+int HThread::resume()
 {
    if(m_status != STATUS_RUNNING){
         changeStatus(STATUS_RUNNING);
@@ -31,7 +43,7 @@ int MyThread::resume()
    return 0;
 }
 
-int MyThread::stop()
+int HThread::stop()
 {
     if(m_status != STATUS_STOP){
         changeStatus(STATUS_STOP);
@@ -42,7 +54,7 @@ int MyThread::stop()
     return 0;
 }
 
-int MyThread::pause()
+int HThread::pause()
 {
     if(m_status == STATUS_RUNNING){
         changeStatus(STATUS_PAUSE);
@@ -50,7 +62,7 @@ int MyThread::pause()
     return 0;
 }
 
-int MyThread::run()
+int HThread::run()
 {
     while(m_status != STATUS_STOP){
         if(m_status  == STATUS_PAUSE){
@@ -63,7 +75,7 @@ int MyThread::run()
     return 0;
 }
 
-void MyThread::sleep()
+void HThread::sleep()
 {
     switch (m_policy) {
     case SLEEP_POLICY_YIELD:
@@ -85,7 +97,7 @@ void MyThread::sleep()
     }
 }
 
-void MyThread::changeStatus(Status status)
+void HThread::changeStatus(Status status)
 {
    m_status = status;
    m_statusChange = true;
