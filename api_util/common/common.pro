@@ -12,3 +12,6 @@ SOURCES += \
     c_ring_buffer.cpp
 
 DESTDIR = ../../bin #generate
+
+DISTFILES += \
+    ../../README.md
